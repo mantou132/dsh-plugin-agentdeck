@@ -1,0 +1,68 @@
+{
+  "name": "dsh-plugin-agentdeck",
+  "version": "0.1.0",
+  "description": "AgentDeck mobile remote control plugin for DeepSeek Harness (dsh) — one-click ACP setup, automatic agentdeckd install & autostart, and in-app pairing QR code",
+  "license": "MIT",
+  "author": "mantou132",
+  "homepage": "https://agentdeck.xianqiao.wang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mantou132/dsh-plugin-agentdeck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mantou132/dsh-plugin-agentdeck/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "agentdeck",
+    "remote-control",
+    "acp",
+    "mobile",
+    "ios",
+    "android"
+  ],
+  "type": "module",
+  "main": "./lib/index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "icon.svg",
+    "lib/*.js",
+    "locale/*.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "yaml": "^2.7.0"
+  }
+}

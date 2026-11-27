@@ -1,0 +1,3 @@
+- insert:
+    - id: agentdeck
+      name: dsh-plugin-agentdeck
