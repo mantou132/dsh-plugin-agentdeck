@@ -15,6 +15,7 @@ import {
   findAgentDeckDaemon,
   generatePairingQrSvg,
   getAgentDeckStatus,
+  setAgentDeckAwake,
   syncAcpPatch,
   upsertCustomAgent,
 } from '../lib/setup.js';
@@ -244,6 +245,45 @@ test('getAgentDeckStatus reads daemon.json, lock PID, and acp plugin state', asy
     assert.equal(status.daemon.pairedReady, true);
     assert.ok(status.daemon.qrSvg.includes('<svg'));
     assert.equal(status.ready, true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('setAgentDeckAwake updates daemon.json awake mode while preserving pairing config', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adk-dsh-awake-'));
+  try {
+    const dshHome = join(dir, '.dsh');
+    const dataDir = join(dir, 'agentdeck');
+    mkdirSync(dataDir, { recursive: true });
+    writeFileSync(
+      join(dataDir, 'daemon.json'),
+      JSON.stringify({
+        relay_id: 'adk1_keep_me',
+        relay_url: 'wss://relay.example/ws',
+        awake: 'never',
+      }),
+    );
+    writeFileSync(join(dataDir, 'daemon.lock'), `${process.pid}\n`);
+    writeFileSync(
+      join(dataDir, 'awake_status.json'),
+      JSON.stringify({ pid: process.pid, mode: 'plugged', on: true, error: null }),
+    );
+
+    const res = await setAgentDeckAwake({ mode: 'plugged', dshHome, dataDir });
+    assert.equal(res.ok, true);
+    assert.equal(res.status.daemon.awake.mode, 'plugged');
+    assert.equal(res.status.daemon.awake.active, true);
+
+    const saved = JSON.parse(readFileSync(join(dataDir, 'daemon.json'), 'utf8'));
+    assert.equal(saved.relay_id, 'adk1_keep_me');
+    assert.equal(saved.relay_url, 'wss://relay.example/ws');
+    assert.equal(saved.awake, 'plugged');
+
+    await assert.rejects(
+      () => setAgentDeckAwake({ mode: 'invalid', dshHome, dataDir }),
+      /Invalid awake mode/,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

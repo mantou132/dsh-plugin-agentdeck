@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "AgentDeck 手机远控",
-    "description": "在 iPhone / Android 手机上通过 AgentDeck 远程控制 DeepSeek Harness，一键配置 ACP、安装并自启 agentdeckd 并扫码配对。"
+    "description": "在 iPhone / Android 手机上通过 AgentDeck 远程控制 DeepSeek Harness，安装后自动完成配置与开机自启，打开设置直接扫码连接。"
   }
 }
