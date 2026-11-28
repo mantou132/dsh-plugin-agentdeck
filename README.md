@@ -36,7 +36,7 @@ Open **Settings → Plugins**, install `dsh-plugin-agentdeck`, then open **Setti
 
 ## Get the Mobile App
 
-- [App Store (iOS)](https://apps.apple.com/app/id6821905390) *(not available on the Mainland China App Store; requires a non-China Apple ID)*
+- [App Store (iOS)](https://apps.apple.com/app/id6821905390) · [TestFlight (iOS Public Beta)](https://testflight.apple.com/join/RWqpYgwm) *(App Store version is not available on the Mainland China App Store)*
 - [Google Play (Android)](https://play.google.com/store/apps/details?id=com.mantou.agentdeck)
 - [Android APK (GitHub Releases)](https://github.com/mantou132/AgentDeck/releases/latest)
 - [AgentDeck Website](https://agentdeck.xianqiao.wang)
@@ -80,7 +80,7 @@ dsh plugin --profile web add dsh-plugin-agentdeck
 dsh web
 ```
 
-打开 **设置 → AgentDeck 手机远控** 扫码即可使用：[App Store](https://apps.apple.com/app/id6821905390)（暂未上架国区，需非中国大陆区 Apple ID）· [Google Play](https://play.google.com/store/apps/details?id=com.mantou.agentdeck) · [Android APK](https://github.com/mantou132/AgentDeck/releases/latest)。
+打开 **设置 → AgentDeck 手机远控** 扫码即可使用：[App Store](https://apps.apple.com/app/id6821905390)（暂未上架国区）· [TestFlight（iOS 公测版）](https://testflight.apple.com/join/RWqpYgwm) · [Google Play](https://play.google.com/store/apps/details?id=com.mantou.agentdeck) · [Android APK](https://github.com/mantou132/AgentDeck/releases/latest)。
 
 ### 安全、隐私与卸载
 
