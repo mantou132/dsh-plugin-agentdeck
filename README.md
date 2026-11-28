@@ -4,6 +4,8 @@ Zero-config mobile remote control plugin for [DeepSeek Harness (`dsh`)](https://
 
 Control DeepSeek Harness from your **iPhone or Android** over native ACP — end-to-end encrypted (`XChaCha20-Poly1305`), with push notifications, file & diff viewing, terminal output, and zero tunnel/VPN setup.
 
+![AgentDeck Remote Control for DeepSeek Harness](assets/screenshot-overview.png)
+
 ## Zero-Click Setup
 
 Install the plugin and open **Settings → AgentDeck** — everything is provisioned automatically in the background on startup:
