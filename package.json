@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-agentdeck",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Zero-config AgentDeck mobile remote control plugin for DeepSeek Harness (dsh) — auto-installs ACP & agentdeckd with autostart, shows pairing QR & keep-awake controls in Settings",
   "license": "MIT",
   "author": "mantou132",
@@ -34,15 +34,18 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "assets/*.png",
     "cordis.patch.yml",
     "icon.svg",
     "lib/*.js",
     "locale/*.json",
+    "screenshots.json",
     "README.md",
     "LICENSE"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "dsh": ">=0.2.0 <0.3.0"
   },
   "dsh": {
     "manifestVersion": 1,
