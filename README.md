@@ -17,7 +17,7 @@ Install the plugin and open **Settings → AgentDeck** — everything is provisi
 
 The Settings tab stays minimal — just your **scannable pairing QR code** plus the 3 controls you actually need:
 
-1. **Remote Service & Autostart** (`Start` / `Restart` / `Stop`)
+1. **Remote Service & Autostart** (`Start` / `Restart` / `Stop`, plus current `agentdeckd` version and manual one-click `Update` when a newer release is available)
 2. **Prevent Automatic Sleep** (`Off` / `On Power` / `Active 1h` / `Always`, hot-reloads without restarting)
 3. **Mobile Default Model** (shows active model; syncs with your current profile in one click if different)
 
@@ -51,7 +51,7 @@ Open **Settings → Plugins**, install `dsh-plugin-agentdeck`, then open **Setti
 
 打开 DSH 的 **设置 → AgentDeck 手机远控** 即可直接扫码配对，界面仅保留最核心的 3 项开关：
 
-1. **远程服务与开机自启**（开启 / 重启 / 停止）
+1. **远程服务与开机自启**（开启 / 重启 / 停止，显示当前 `agentdeckd` 版本，有新版时提供手动一键更新）
 2. **防自动休眠**（关闭 / 插电常亮 / 活跃 1 小时 / 始终常亮，热重载生效）
 3. **手机端默认模型**（与当前界面不同时一键同步）
 

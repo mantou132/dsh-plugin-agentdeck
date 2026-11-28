@@ -12,11 +12,18 @@ import { join } from 'node:path';
 import test from 'node:test';
 import {
   buildPairingUri,
+  checkDaemonUpdate,
+  clearDaemonVersionCaches,
+  compareSemver,
+  detectDaemonInstallMethod,
   findAgentDeckDaemon,
   generatePairingQrSvg,
   getAgentDeckStatus,
+  parseSemver,
+  readDaemonVersion,
   setAgentDeckAwake,
   syncAcpPatch,
+  upgradeAgentDeckDaemon,
   upsertCustomAgent,
 } from '../lib/setup.js';
 
@@ -285,6 +292,162 @@ test('setAgentDeckAwake updates daemon.json awake mode while preserving pairing 
       /Invalid awake mode/,
     );
   } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('parseSemver and compareSemver handle standard and prerelease versions', () => {
+  assert.equal(parseSemver('agentdeckd 0.9.0')?.version, '0.9.0');
+  assert.equal(parseSemver('v1.2.3-beta.1')?.version, '1.2.3-beta.1');
+  assert.equal(parseSemver('not a version'), null);
+
+  assert.equal(compareSemver('1.0.0', '0.9.0'), 1);
+  assert.equal(compareSemver('0.9.0', '1.0.0'), -1);
+  assert.equal(compareSemver('1.0.0', '1.0.0'), 0);
+  assert.equal(compareSemver('1.0.0', '1.0.0-rc.1'), 1);
+  assert.equal(compareSemver('1.0.0-rc.2', '1.0.0-rc.10'), -1);
+});
+
+test('detectDaemonInstallMethod classifies local, homebrew, npm-global, cargo, and scoop', () => {
+  const dataDir = '/Users/demo/Library/Application Support/agentdeck';
+  assert.equal(
+    detectDaemonInstallMethod(`${dataDir}/cli/node_modules/.bin/agentdeckd`, {
+      dataDir,
+      platform: 'darwin',
+      home: '/Users/demo',
+    }),
+    'local',
+  );
+  assert.equal(
+    detectDaemonInstallMethod('/opt/homebrew/Cellar/agentdeckd/0.9.0/bin/agentdeckd', {
+      dataDir,
+      platform: 'darwin',
+      home: '/Users/demo',
+    }),
+    'homebrew',
+  );
+  assert.equal(
+    detectDaemonInstallMethod('/usr/local/lib/node_modules/agentdeckd/bin/agentdeckd', {
+      dataDir,
+      platform: 'darwin',
+      home: '/Users/demo',
+    }),
+    'npm-global',
+  );
+  assert.equal(
+    detectDaemonInstallMethod('/Users/demo/.cargo/bin/agentdeckd', {
+      dataDir,
+      platform: 'darwin',
+      home: '/Users/demo',
+    }),
+    'cargo',
+  );
+  assert.equal(
+    detectDaemonInstallMethod('C:\\Users\\demo\\scoop\\shims\\agentdeckd.exe', {
+      dataDir: 'C:\\Users\\demo\\AppData\\Local\\agentdeck',
+      platform: 'win32',
+      home: 'C:\\Users\\demo',
+    }),
+    'scoop',
+  );
+});
+
+test('readDaemonVersion and checkDaemonUpdate detect available updates', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adk-dsh-ver-'));
+  try {
+    clearDaemonVersionCaches();
+    const binDir = join(dir, 'cli', 'node_modules', '.bin');
+    mkdirSync(binDir, { recursive: true });
+    const binPath = join(binDir, 'agentdeckd');
+    writeFileSync(binPath, '#!/bin/sh\necho "agentdeckd 0.9.0"\n');
+    chmodSync(binPath, 0o755);
+
+    const version = await readDaemonVersion(binPath);
+    assert.equal(version, '0.9.0');
+
+    const mockFetch = async () => ({
+      ok: true,
+      json: async () => ({ version: '1.0.0' }),
+    });
+
+    const check = await checkDaemonUpdate({
+      dataDir: dir,
+      platform: 'darwin',
+      env: { PATH: '' },
+      home: dir,
+      force: true,
+      fetchImpl: mockFetch,
+    });
+    assert.equal(check.currentVersion, '0.9.0');
+    assert.equal(check.latestVersion, '1.0.0');
+    assert.equal(check.updateAvailable, true);
+    assert.equal(check.installMethod, 'local');
+    assert.equal(check.canUpdate, true);
+  } finally {
+    clearDaemonVersionCaches();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('upgradeAgentDeckDaemon stops, upgrades local install, and restarts daemon', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adk-dsh-upgrade-'));
+  try {
+    clearDaemonVersionCaches();
+    const dshHome = join(dir, '.dsh');
+    const dataDir = join(dir, 'agentdeck');
+    const binDir = join(dataDir, 'cli', 'node_modules', '.bin');
+    mkdirSync(binDir, { recursive: true });
+
+    const binPath = join(binDir, 'agentdeckd');
+    writeFileSync(binPath, '#!/bin/sh\necho "agentdeckd 0.9.0"\n');
+    chmodSync(binPath, 0o755);
+
+    writeFileSync(
+      join(dataDir, 'daemon.json'),
+      JSON.stringify({ relay_id: 'adk1_upgrade_test_123' }),
+    );
+    writeFileSync(join(dataDir, 'daemon.lock'), `${process.pid}\n`);
+
+    const calls = [];
+    const mockRun = async (cmd, args) => {
+      calls.push([cmd, args]);
+      if (cmd === binPath && args[0] === 'stop') {
+        rmSync(join(dataDir, 'daemon.lock'), { force: true });
+        return { code: 0, stdout: 'stopped', stderr: '' };
+      }
+      if (cmd === '/mock/pnpm') {
+        writeFileSync(binPath, '#!/bin/sh\necho "agentdeckd 1.0.0"\n');
+        chmodSync(binPath, 0o755);
+        return { code: 0, stdout: 'upgraded', stderr: '' };
+      }
+      if (cmd === binPath && args[0] === 'start') {
+        writeFileSync(join(dataDir, 'daemon.lock'), `${process.pid}\n`);
+        return { code: 0, stdout: 'started', stderr: '' };
+      }
+      return { code: 0, stdout: '', stderr: '' };
+    };
+
+    const res = await upgradeAgentDeckDaemon({
+      dshHome,
+      dataDir,
+      platform: 'darwin',
+      env: { PATH: '' },
+      home: dir,
+      packageManager: { command: '/mock/pnpm', args: [] },
+      runCommandImpl: mockRun,
+    });
+
+    assert.equal(res.ok, true);
+    assert.equal(res.previousVersion, '0.9.0');
+    assert.equal(res.version, '1.0.0');
+    assert.equal(res.method, 'local');
+    assert.deepEqual(calls, [
+      [binPath, ['stop']],
+      ['/mock/pnpm', ['add', 'agentdeckd@latest']],
+      [binPath, ['start']],
+    ]);
+  } finally {
+    clearDaemonVersionCaches();
     rmSync(dir, { recursive: true, force: true });
   }
 });
